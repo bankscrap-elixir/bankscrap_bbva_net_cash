@@ -158,9 +158,13 @@ defmodule BankscrapBbvaNetCash do
     }
   end
 
-  def build_transaction(data) do
+  defp build_transaction(data) do
     %Transaction{
-      description: data["concepto"] || data["descConceptoTx"]
+      id: data["codRmsoperS"],
+      description: data["concepto"] || data["descConceptoTx"],
+      effective_date: parse_date(data["fechaContable"]),
+      amount: Money.parse!(data["importe"], data["divisa"]),
+      balance: Money.parse!(data["saldoContable"], data["divisa"])
     }
   end
 
@@ -190,5 +194,14 @@ defmodule BankscrapBbvaNetCash do
       user
     }"}, "codigoCliente"=>"1", "tipoAutenticacion"=>"1", "identificacionCliente"=>"", "tipoIdentificacionCliente"=>"6", "propiedades"=>nil}
     """)
+  end
+
+  defp parse_date(value) do
+    [day, month, year] =
+      value
+      |> String.split("/")
+      |> Enum.map(&String.to_integer/1)
+
+    Date.from_erl({year, month, day}) |> elem(1)
   end
 end
